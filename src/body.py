@@ -6,13 +6,14 @@ import numpy as np
 class GravitationalBody:
     def __init__(self, 
     mass: float, radius: float, 
-    px: float, py: float, pz: float, 
-    vx: float = 0.0, vy: float = 0.0, vz: float = 0.0,
-    color: Tuple[int, int, int] = (255, 255, 255), trajectory_len: int = 100) -> None:
+    position: Tuple[float, float, float], 
+    velocity: Tuple[float, float, float] = (0, 0, 0), 
+    color: Tuple[int, int, int] = (255, 255, 255), 
+    trajectory_len: int = 100) -> None:
         self.mass = mass
         self.radius = radius
-        self.position = np.array([px, py, pz], dtype=float)
-        self.velocity = np.array([vx, vy, vz], dtype=float)
+        self.position = np.array(position, dtype=float)
+        self.velocity = np.array(velocity, dtype=float)
         self.color = color
         self.trajectory = deque(maxlen=trajectory_len)
 
@@ -26,9 +27,8 @@ class GravitationalBody:
     def gravitational_foce(self, bodies: List[GravitationalBody], dt: float, G: float) -> None:
         dV = np.zeros(3, dtype=float)
         for body in bodies:
-            dV += G * self._acceleration(body)
-        
-        self.velocity += dV * dt
+            dV += self._acceleration(body)
+        self.velocity += G * dV * dt
     
     def update(self):
         self.trajectory.append(self.coordinates)
@@ -38,8 +38,10 @@ class GravitationalBody:
         if self is other:
             return np.zeros(3, dtype=float)
 
-        distance = other.position - self.position 
+        distance = np.array(other.position - self.position)
         norm_distance = np.linalg.norm(distance)
+        if norm_distance < 2 * (self.radius + other.radius):
+            distance *= -0.1 
         return (other.mass / norm_distance ** 3) * distance
 
         
