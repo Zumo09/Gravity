@@ -1,5 +1,4 @@
 from __future__ import annotations
-from collections import deque
 from typing import List, Tuple
 import numpy as np
 
@@ -7,22 +6,11 @@ class GravitationalBody:
     def __init__(self, 
     mass: float, radius: float, 
     position: Tuple[float, float, float], 
-    velocity: Tuple[float, float, float] = (0, 0, 0), 
-    color: Tuple[int, int, int] = (255, 255, 255), 
-    trajectory_len: int = 100) -> None:
+    velocity: Tuple[float, float, float] = (0, 0, 0)) -> None:
         self.mass = mass
         self.radius = radius
         self.position = np.array(position, dtype=float)
         self.velocity = np.array(velocity, dtype=float)
-        self.color = color
-        self.trajectory = deque(maxlen=trajectory_len)
-
-        for _ in range(10):
-            self.trajectory.append(self.coordinates)
-
-    @property
-    def coordinates(self) -> Tuple[float, float, float]:
-        return self.position[0], self.position[1], self.position[2]
     
     def gravitational_foce(self, bodies: List[GravitationalBody], dt: float, G: float) -> None:
         dV = np.zeros(3, dtype=float)
@@ -31,7 +19,6 @@ class GravitationalBody:
         self.velocity += G * dV * dt
     
     def update(self):
-        self.trajectory.append(self.coordinates)
         self.position += self.velocity
 
     def _acceleration(self, other: GravitationalBody) -> np.ndarray:
