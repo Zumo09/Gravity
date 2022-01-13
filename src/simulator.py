@@ -1,11 +1,11 @@
 import random
-from typing import List
+from typing import List, Tuple
 import pygame
 
 from body import GravitationalBody
 
 pygame.init()
-font = pygame.font.Font('arial.ttf', 25)
+font = pygame.font.SysFont("Arial", 32, bold=True)
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -14,31 +14,31 @@ COLORS = [
     (0, 0, 255), 
     (0, 255, 0), 
     (255, 0, 0), 
-    (255, 100, 10), 
-    (255, 255, 0), 
-    (0, 255, 170), 
-    (115, 0, 0), 
-    (180, 255, 100), 
-    (255, 100, 180), 
-    (240, 0, 255), 
-    (127, 127, 127), 
-    (255, 0, 230), 
-    (100, 40, 0), 
-    (0, 50, 0), 
-    (0, 0, 100), 
-    (210, 150, 75), 
-    (255, 200, 0), 
-    (255, 255, 100), 
-    (0, 255, 255), 
-    (200, 200, 200), 
-    (50, 50, 50), 
-    (230, 220, 170), 
-    (200, 190, 140), 
-    (235, 245, 255)
+    # (255, 100, 10), 
+    # (255, 255, 0), 
+    # (0, 255, 170), 
+    # (115, 0, 0), 
+    # (180, 255, 100), 
+    # (255, 100, 180), 
+    # (240, 0, 255), 
+    # (127, 127, 127), 
+    # (255, 0, 230), 
+    # (100, 40, 0), 
+    # (0, 50, 0), 
+    # (0, 0, 100), 
+    # (210, 150, 75), 
+    # (255, 200, 0), 
+    # (255, 255, 100), 
+    # (0, 255, 255), 
+    # (200, 200, 200), 
+    # (50, 50, 50), 
+    # (230, 220, 170), 
+    # (200, 190, 140), 
+    # (235, 245, 255)
 ]
 
 class GravitySimulator:
-    G = 1.0
+    G = 100.0
     FPS = 30
     dt = 1.0
     TRAJECTORY_LEN = 100
@@ -91,13 +91,17 @@ class GravitySimulator:
         for body in self.bodies:
             body.update()
 
+    def _project(self, x: float, y: float, z: float) -> Tuple[float, float]:
+        return self.width / 2 + x/z, self.width / 2 + y/z
+
     def _update_ui(self):
         self.display.fill(BLACK)
 
         for body in self.bodies:
             x, y, z = body.coordinates
-            pygame.draw.circle(self.display, body.color, (x/z, y/z), body.radius/z)
-            pygame.draw.aalines(self.display, body.color, False, body.trajectory, blends=1)
+            pygame.draw.circle(self.display, body.color, self._project(x, y, z), body.radius/z)
+            trajectory = [self._project(x, y, z) for x, y, z in body.trajectory]
+            pygame.draw.aalines(self.display, body.color, False, trajectory)
 
         text = font.render("Time: " + str(self.time), True, WHITE)
         self.display.blit(text, [0, 0])
@@ -107,8 +111,8 @@ class GravitySimulator:
 if __name__ == '__main__':
     sim = GravitySimulator()
 
-    sim.add_body(10, 10, 0, 0, 0)
-    sim.add_body(10, 10, 10, 10, 10, 10, 10, 10)
+    sim.add_body(mass=10.0, radius=1000.0, px=1000.0, py=1000.0, pz=10.0)
+    sim.add_body(mass=10.0, radius=1000.0, px=-1000.0, py=-1000.0, pz=10.0)
 
     # game loop
     while True:
