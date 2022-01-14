@@ -1,6 +1,7 @@
 # Gravity Simulator
 
-Physics simulation, with 3D rendering, using pygame and numpy
+Physics simulation, with 3D rendering, using pygame and numpy.
+Executable can be found in `src\dist\gravity.exe`
 
 # Controls
 
