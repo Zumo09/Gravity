@@ -1,0 +1,11 @@
+
+*.pyc
+*.toc
+*.zip
+*.pyz
+*.manifest
+*.pkg
+*.txt
+*.html
+src/saturn.ico
+src/saturn.png

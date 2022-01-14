@@ -41,7 +41,7 @@ COLORS = [
 ]
 
 def random_star():
-    l = 8000
+    l = 100000
     d = np.random.randint(l, 2 * l)
     r = np.random.random(size=3) * np.pi * 4
     p = rotation_matrix(*r)
@@ -63,7 +63,7 @@ class GravitySimulator:
         width = self.display.get_width()
         height = self.display.get_height()
 
-        self.cam_vel = 10
+        self.cam_vel = 50
         self.cam_rot = 0.01
         self.r = 0.5 * (0.5 - np.random.random(size=3))
         self.stars = [random_star() for _ in range(200)]
@@ -72,6 +72,7 @@ class GravitySimulator:
         self.camera = Camera((-500, -500, -10000), (0.5, 0.5, 0), (width // 2, height // 2), focal=1000)
 
         self.running = False
+        self.move_camera = True
         self.time = 0
 
         self.bodies: List[GravitationalBody] = []
@@ -94,12 +95,15 @@ class GravitySimulator:
                     self.running = not self.running 
                 elif event.key == pygame.K_p:
                     self.camera.reset()
+                elif event.key == pygame.K_m:
+                    self.move_camera = not self.move_camera
+
 
         key_pressed = pygame.key.get_pressed()
         if key_pressed[pygame.K_w]:
-            self.camera.move(1, self.cam_vel)
-        if key_pressed[pygame.K_s]:
             self.camera.move(1, -self.cam_vel)
+        if key_pressed[pygame.K_s]:
+            self.camera.move(1, self.cam_vel)
         if key_pressed[pygame.K_a]:
             self.camera.move(0, -self.cam_vel)
         if key_pressed[pygame.K_d]:
@@ -121,14 +125,15 @@ class GravitySimulator:
             self.camera.rotate(2, -self.cam_rot)
         if key_pressed[pygame.K_f]:
             self.camera.rotate(2, self.cam_rot)
+        
+        if self.move_camera:
+            self.r += 0.01 * (0.5 - np.random.random(size=3))
+            if np.linalg.norm(self.r) > 0.5:
+                self.r = 0.5 * (0.5 - np.random.random(size=3))
 
-        self.r += 0.01 * (0.5 - np.random.random(size=3))
-        if np.linalg.norm(self.r) > 0.5:
-            self.r = 0.5 * (0.5 - np.random.random(size=3))
-
-        self.camera.rotate(1, self.r[0] * self.cam_rot)
-        self.camera.rotate(0, self.r[1] * self.cam_rot)
-        self.camera.rotate(2, self.r[2] * self.cam_rot)
+            self.camera.rotate(1, self.r[0] * self.cam_rot)
+            self.camera.rotate(0, self.r[1] * self.cam_rot)
+            self.camera.rotate(2, self.r[2] * self.cam_rot)
 
 
         # 2. update bodies
