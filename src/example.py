@@ -24,8 +24,7 @@ points = [
     np.array([10, 10, 0]),
     np.array([0, 10, 0]),
 ]
-camera = Camera((1, 1, -30), (0, 0, 0), (width // 2, height // 2), focal=100)   
-print(camera.A)
+camera = Camera((1, 1, -100), (0, 0, 0), (width // 2, height // 2), focal=1000)   
 # camera = Camera((1, 1, -1.05), (0, 0, 0), (width // 2, height // 2), focal=0.1, ku_kv=(100, 100))   
 speed = 0.01
 
@@ -44,17 +43,17 @@ while run:
     
     key_pressed = pygame.key.get_pressed()
     if key_pressed[pygame.K_w]:
-        camera.move(1, 10 * speed)
+        camera.move(1, 50 * speed)
     if key_pressed[pygame.K_s]:
-        camera.move(1, -10 * speed)
+        camera.move(1, -50 * speed)
     if key_pressed[pygame.K_a]:
-        camera.move(0, -10 * speed)
+        camera.move(0, -50 * speed)
     if key_pressed[pygame.K_d]:
-        camera.move(0, 10 * speed)
+        camera.move(0, 50 * speed)
     if key_pressed[pygame.K_q]:
-        camera.move(2, -10 * speed)
+        camera.move(2, -50 * speed)
     if key_pressed[pygame.K_e]:
-        camera.move(2, 10 * speed)
+        camera.move(2, 50 * speed)
 
     if key_pressed[pygame.K_UP]:
         camera.rotate(1, speed)
@@ -70,21 +69,31 @@ while run:
         camera.rotate(2, speed)
 
     proj_origin = camera.project(np.array([0, 0, 0]))
-    xx = camera.project(np.array([1000, 0, 0]))
+    # xx = camera.project(np.array([1000, 0, 0]))
     yy = camera.project(np.array([0, 1000, 0]))
-    zz = camera.project(np.array([0, 0, 1000]))
-    pygame.draw.line(screen, (255, 0, 0), proj_origin, xx, 5)
+    # zz = camera.project(np.array([0, 0, 1000]))
+    # pygame.draw.line(screen, (255, 0, 0), proj_origin, xx, 5)
     pygame.draw.line(screen, (0, 255, 0), proj_origin, yy, 5)
-    pygame.draw.line(screen, (0, 0, 255), proj_origin, zz, 5)
+    # pygame.draw.line(screen, (0, 0, 255), proj_origin, zz, 5)
 
-    for i in range(10):
-        infin = 1000000000000
-        a = camera.project(np.array([10 * i, 0, 0]))
-        b = camera.project(np.array([10 * i, 0, infin]))
-        pygame.draw.line(screen, (0, 0, 255), a, b, 1)
-        a = camera.project(np.array([0, 0, 10 * i]))
-        b = camera.project(np.array([infin, 0, 10 * i]))
-        pygame.draw.line(screen, (255, 0, 0), a, b, 1)
+    # l = 50
+    # plane = (
+    #     camera.project(np.array([ l, 0, l])), 
+    #     camera.project(np.array([ l, 0,-l])), 
+    #     camera.project(np.array([-l, 0,-l])), 
+    #     camera.project(np.array([-l, 0, l]))
+    #     )
+    # pygame.draw.polygon(screen, (255, 0, 0, 50), plane)
+
+    # l = 2
+    # cam_pos = np.array(camera.position)
+    # camera_plane = (
+    #     camera.project(cam_pos + np.array([ l, 0, l])), 
+    #     camera.project(cam_pos + np.array([ l, 0,-l])), 
+    #     camera.project(cam_pos + np.array([-l, 0,-l])), 
+    #     camera.project(cam_pos + np.array([-l, 0, l]))
+    #     )
+    # pygame.draw.polygon(screen, (255, 0, 0, 50), camera_plane, 2)
 
     projected_points = [camera.project(point) for point in points]
 

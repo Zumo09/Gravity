@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Iterable, List, Tuple
 import numpy as np
 
 def translation_matrix(dx: float, dy: float, dz: float):   
@@ -29,6 +29,9 @@ class Camera:
         self.ku_kv = ku_kv
         self.center = center
         
+        self.init_pos = position
+        self.init_rot = rotation
+
         self.position = list(position)
         self.rotation = list(rotation)
         
@@ -59,6 +62,11 @@ class Camera:
         self.rotation[axes] += movement
         self.G = self.generate_G()
 
+    def reset(self):
+        self.position = list(self.init_pos)
+        self.rotation = list(self.init_rot)
+        self.G = self.generate_G()
+
     def project(self, position: np.ndarray) -> Tuple[float, float]:
         W = np.array([position[0], position[1], position[2], 1])
         M = np.matmul(self.G, W)
@@ -68,3 +76,9 @@ class Camera:
             return m[0], m[1]
         else:
             return m[0] / m[2], m[1] / m[2]
+    
+    def project_all(self, points) -> List[Tuple[float, float]]:
+        W = np.hstack([points, np.ones((len(points), 1))])
+        M = np.matmul(self.G, W.T)
+        m_all = np.matmul(self.A, M)
+        return [(m[0] / m[2], m[1] / m[2]) for m in m_all.T]
