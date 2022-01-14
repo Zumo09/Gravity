@@ -33,7 +33,7 @@ class GravitySimulator:
         width = self.display.get_width()
         height = self.display.get_height()
 
-        self.running = False
+        self.running = True
         self.move_camera = True
 
         self.background = background_color
