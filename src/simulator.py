@@ -21,7 +21,9 @@ class GravitySimulator:
     def __init__(self,
     num_star: int = 200,
     background_color: Tuple[int, int, int] = (0, 0, 10),
-    star_color: Tuple[int, int, int] = (255, 255, 255), 
+    star_color: Tuple[int, int, int] = (255, 255, 255),
+    camera_init_pos: Tuple[float, float, float] = (-500, -500, -10000), 
+    camera_init_rot: Tuple[float, float, float] = (0.5, 0.5, 0),
     screen_dim: Optional[Tuple[int, int]] = None):
         pygame.init()
         if screen_dim is not None:
@@ -42,7 +44,7 @@ class GravitySimulator:
         self.cam_vel = 50
         self.cam_rot = 0.01
         self.cam_auto_rotation = 0.5 * (0.5 - np.random.random(size=3))
-        self.camera = Camera((-500, -500, -10000), (0.5, 0.5, 0), (width // 2, height // 2), focal=1000)
+        self.camera = Camera(camera_init_pos, camera_init_rot, (width // 2, height // 2), focal=1000)
 
         self.bodies: List[GravitationalBody] = []
         self.stars = [random_star(100000) for _ in range(num_star)]
