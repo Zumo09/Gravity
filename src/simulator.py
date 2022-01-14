@@ -6,76 +6,46 @@ from body import GravitationalBody
 
 import pygame
 
-pygame.init()
-font = pygame.font.SysFont("Arial", 22, bold=True)
 
-BLACK = (0, 0, 0)
-NAVY_BLUE = ((0, 0, 10))
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-DANDILION_YELLOW = (255,200,0)
-COLORS = [
-    (5, 255, 255),
-    (255, 100, 10), 
-    (255, 255, 0), 
-    (0, 255, 170), 
-    (115, 0, 0), 
-    (180, 255, 100), 
-    (255, 100, 180), 
-    (240, 0, 255), 
-    (127, 127, 127), 
-    (255, 0, 230), 
-    (100, 40, 0), 
-    # (0, 50, 0), 
-    # (0, 0, 100), 
-    (210, 150, 75), 
-    (255, 200, 0), 
-    (255, 255, 100), 
-    # (0, 255, 255), 
-    # (200, 200, 200), 
-    # (50, 50, 50), 
-    (230, 220, 170), 
-    (200, 190, 140), 
-]
-
-def random_star():
-    l = 100000
-    d = np.random.randint(l, 2 * l)
+def random_star(min_distance: int) -> np.ndarray: 
+    d = np.random.randint(min_distance, 2 * min_distance)
     r = np.random.random(size=3) * np.pi * 4
     p = rotation_matrix(*r)
     return np.matmul(p, [d, 0, 0])
 
 class GravitySimulator:
-    def __init__(self, G: float = 100, fps: int = 60, dt: float = 0.05, screen_dim: Optional[Tuple[int, int]] = None):
-        self.G = G
-        self.FPS = fps
-        self.dt = dt
+    G: float = 100
+    FPS: int = 60
+    dt: float = 0.05
 
-        # init display
+    def __init__(self,
+    num_star: int = 200,
+    background_color: Tuple[int, int, int] = (0, 0, 10),
+    star_color: Tuple[int, int, int] = (255, 255, 255), 
+    screen_dim: Optional[Tuple[int, int]] = None):
+        pygame.init()
         if screen_dim is not None:
             self.display = pygame.display.set_mode(screen_dim)
         else:
             self.display = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        pygame.display.set_caption('Gravity')
-
+        pygame.display.set_caption('Gravity Simulator')
+        self.clock = pygame.time.Clock()
         width = self.display.get_width()
         height = self.display.get_height()
 
-        self.cam_vel = 50
-        self.cam_rot = 0.01
-        self.r = 0.5 * (0.5 - np.random.random(size=3))
-        self.stars = [random_star() for _ in range(200)]
-
-        self.clock = pygame.time.Clock()
-        self.camera = Camera((-500, -500, -10000), (0.5, 0.5, 0), (width // 2, height // 2), focal=1000)
-
         self.running = False
         self.move_camera = True
-        self.time = 0
+
+        self.background = background_color
+        self.star_color = star_color
+
+        self.cam_vel = 50
+        self.cam_rot = 0.01
+        self.cam_auto_rotation = 0.5 * (0.5 - np.random.random(size=3))
+        self.camera = Camera((-500, -500, -10000), (0.5, 0.5, 0), (width // 2, height // 2), focal=1000)
 
         self.bodies: List[GravitationalBody] = []
+        self.stars = [random_star(100000) for _ in range(num_star)]
 
     def add_body(self, body: GravitationalBody) -> None:
         self.bodies.append(body)
@@ -93,9 +63,9 @@ class GravitySimulator:
                     return False
                 elif event.key == pygame.K_SPACE:
                     self.running = not self.running 
-                elif event.key == pygame.K_p:
+                elif event.key == pygame.K_r:
                     self.camera.reset()
-                elif event.key == pygame.K_m:
+                elif event.key == pygame.K_t:
                     self.move_camera = not self.move_camera
 
 
@@ -113,46 +83,40 @@ class GravitySimulator:
         if key_pressed[pygame.K_e]:
             self.camera.move(2, self.cam_vel)
 
-        if key_pressed[pygame.K_UP]:
+        if key_pressed[pygame.K_i]:
             self.camera.rotate(1, self.cam_rot)
-        if key_pressed[pygame.K_DOWN]:
+        if key_pressed[pygame.K_k]:
             self.camera.rotate(1, -self.cam_rot)
-        if key_pressed[pygame.K_LEFT]:
+        if key_pressed[pygame.K_j]:
             self.camera.rotate(0, -self.cam_rot)
-        if key_pressed[pygame.K_RIGHT]:
+        if key_pressed[pygame.K_l]:
             self.camera.rotate(0, self.cam_rot)
-        if key_pressed[pygame.K_r]:
+        if key_pressed[pygame.K_u]:
             self.camera.rotate(2, -self.cam_rot)
-        if key_pressed[pygame.K_f]:
+        if key_pressed[pygame.K_o]:
             self.camera.rotate(2, self.cam_rot)
         
         if self.move_camera:
-            self.r += 0.01 * (0.5 - np.random.random(size=3))
-            if np.linalg.norm(self.r) > 0.5:
-                self.r = 0.5 * (0.5 - np.random.random(size=3))
+            self.cam_auto_rotation += 0.01 * (0.5 - np.random.random(size=3))
+            if np.linalg.norm(self.cam_auto_rotation) > 0.5:
+                self.cam_auto_rotation = 0.5 * (0.5 - np.random.random(size=3))
 
-            self.camera.rotate(1, self.r[0] * self.cam_rot)
-            self.camera.rotate(0, self.r[1] * self.cam_rot)
-            self.camera.rotate(2, self.r[2] * self.cam_rot)
+            self.camera.rotate(1, self.cam_auto_rotation[0] * self.cam_rot)
+            self.camera.rotate(0, self.cam_auto_rotation[1] * self.cam_rot)
+            self.camera.rotate(2, self.cam_auto_rotation[2] * self.cam_rot)
 
 
-        # 2. update bodies
         if self.running:
-            self._apply_gravity()
-            self.time += self.dt
+            for body in self.bodies:
+                body.gravitational_foce(self.bodies, self.dt, self.G)
 
-        # 5. update ui and clock
+            for body in self.bodies:
+                body.update() 
+
         self._update_ui()
         self.clock.tick(self.FPS)
 
         return True
-
-    def _apply_gravity(self):
-        for body in self.bodies:
-            body.gravitational_foce(self.bodies, self.dt, self.G)
-
-        for body in self.bodies:
-            body.update()    
 
     def _scale_radius(self, body: GravitationalBody) -> float:
         r = body.radius
@@ -160,10 +124,10 @@ class GravitySimulator:
         return r * self.camera.focal / distance
 
     def _update_ui(self):
-        self.display.fill(NAVY_BLUE)
+        self.display.fill(self.background)
 
         for star in self.camera.project_all(self.stars):
-            pygame.draw.circle(self.display, WHITE, star, 1)        
+            pygame.draw.circle(self.display, self.star_color, star, 1)        
 
         for body in self.bodies:
             m = self.camera.project(body.position)
@@ -172,24 +136,12 @@ class GravitySimulator:
             trajectory = self.camera.project_all(body.trajectory)
             pygame.draw.aalines(self.display, body.color, False, trajectory)
 
-        # text = font.render(f"Time: {self.time:.2f}", True, WHITE)
-        # self.display.blit(text, [0, 0])
+        pygame.display.flip()     
 
-        pygame.display.flip()        
+    def main_loop(self):
+        while self.simulation_step():
+            pass
 
-
-if __name__ == '__main__':
-    sim = GravitySimulator()
-    sim.add_bodies([
-        GravitationalBody(10, 30, (0, 1000, 0), (70, 0, 30), color=RED, trajectory_len=100),
-        GravitationalBody(10, 60, (0, 2000, 0), (50, 0, 0), color=GREEN, trajectory_len=220),
-        GravitationalBody(10, 50, (0, 3000, 0), (0, 0, 30), color=BLUE, trajectory_len=230),
-        GravitationalBody(1e6, 100, (0, 0, 0), (0, 0, 0), color=DANDILION_YELLOW)
-    ])
-
-    # game loop
-    while sim.simulation_step():
-        pass
-
-    pygame.quit()
+        pygame.quit()      
+    
 
