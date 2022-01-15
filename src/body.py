@@ -37,7 +37,7 @@ class GravitationalBody:
         distance = np.array(other.position - self.position)
         norm_distance = np.linalg.norm(distance)
         if norm_distance < 2 * (self.radius + other.radius):
-            distance *= -0.1 
+            return - (other.mass / (2 * (self.radius + other.radius)) ** 3) * distance 
         return (other.mass / norm_distance ** 3) * distance
 
         

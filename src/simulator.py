@@ -6,6 +6,13 @@ from body import GravitationalBody
 
 import pygame
 
+def shades(light: Tuple[int, int, int], dark: Tuple[int, int, int], shades: int) -> List[Tuple[int, int, int]]:
+    gaps = [(l - d) / (shades - 1) for l, d in zip(light, dark)]
+    return [(
+        int(light[0] - s * gaps[0]), 
+        int(light[1] - s * gaps[1]), 
+        int(light[2] - s * gaps[2])
+        ) for s in range(shades)]
 
 def random_star(min_distance: int) -> np.ndarray: 
     d = np.random.randint(min_distance, 2 * min_distance)
@@ -44,6 +51,7 @@ class GravitySimulator:
         self.cam_vel = 50
         self.cam_rot = 0.01
         self.cam_auto_rotation = 0.5 * (0.5 - np.random.random(size=3))
+        self.cam_auto_movement = np.zeros(3)
         self.camera = Camera(camera_init_pos, camera_init_rot, (width // 2, height // 2), focal=1000)
 
         self.bodies: List[GravitationalBody] = []
@@ -107,6 +115,14 @@ class GravitySimulator:
             self.camera.rotate(0, self.cam_auto_rotation[1] * self.cam_rot)
             self.camera.rotate(2, self.cam_auto_rotation[2] * self.cam_rot)
 
+            self.cam_auto_movement *= 0.99
+            self.cam_auto_movement += 0.01 * (0.5 - np.random.random(size=3))
+
+            self.camera.move(1, self.cam_auto_movement[0] * 0.1 * self.cam_vel)
+            self.camera.move(0, self.cam_auto_movement[1] * 0.1 * self.cam_vel)
+            self.camera.move(2, self.cam_auto_movement[2] * 0.1 * self.cam_vel)
+
+        self.camera.apply_movement()
 
         if self.running:
             for body in self.bodies:
@@ -142,8 +158,6 @@ class GravitySimulator:
 
     def main_loop(self):
         while self.simulation_step():
-            pass
+            continue
 
         pygame.quit()      
-    
-
