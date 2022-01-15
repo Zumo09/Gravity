@@ -23,7 +23,7 @@ pip install pyinstaller
 
 cd src
 
-pyinstaller --clean --windowed --onefile --version-file file_version_info.txt --name Gravity --icon saturn.ico gravity.py
+pyinstaller --clean --windowed --onefile --name Gravity --icon saturn.ico gravity.py
 ```
 
 Executable can be found in `src/dist/gravity.exe`
