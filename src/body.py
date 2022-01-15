@@ -11,7 +11,7 @@ class GravitationalBody:
         radius: float,
         position: Tuple[float, float, float],
         velocity: Tuple[float, float, float] = (0, 0, 0),
-        color: Tuple[float, float, float] = (255, 255, 255),
+        color: Tuple[int, int, int] = (255, 255, 255),
         trajectory_len: int = 2,
     ) -> None:
         self.mass = mass
