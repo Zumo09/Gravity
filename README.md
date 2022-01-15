@@ -2,10 +2,24 @@
 
 Physics simulation, with 3D rendering, using pygame and numpy.
 
-# Installing
+## Requirements
 
 ```
-pip install numpy pygame pyinstaller
+pip install numpy pygame
+```
+
+## Run the program
+
+```
+cd src
+
+python gravity.py
+```
+
+## Installation
+
+```
+pip install pyinstaller
 
 cd src
 
