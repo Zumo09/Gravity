@@ -1,7 +1,18 @@
 # Gravity Simulator
 
 Physics simulation, with 3D rendering, using pygame and numpy.
-Executable can be found in `src\dist\gravity.exe`
+
+# Installing
+
+```
+pip install numpy pygame pyinstaller
+
+cd src
+
+pyinstaller -w -F -i "saturn.ico" gravity.exe
+```
+
+Executable can be found in `src/dist/gravity.exe`
 
 # Controls
 
