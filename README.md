@@ -23,7 +23,7 @@ pip install pyinstaller
 
 cd src
 
-pyinstaller -w -F -i "saturn.ico" gravity.exe
+pyinstaller -w -F -i "saturn.ico" gravity.py
 ```
 
 Executable can be found in `src/dist/gravity.exe`
