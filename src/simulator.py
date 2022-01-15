@@ -42,7 +42,7 @@ class GravitySimulator:
         camera_init_rot: Tuple[float, float, float] = (0.5, 0.5, 0),
         screen_dim: Optional[Tuple[int, int]] = None,
         start_time: bool = True,
-        start_movement: bool = True
+        start_movement: bool = True,
     ):
         pygame.init()
         if screen_dim is not None:
@@ -63,8 +63,9 @@ class GravitySimulator:
         self.cam_vel = 50
         self.cam_rot = 0.01
 
+        self.cam_auto_z = 0
         self.cam_auto_rotation = 0.5 * (0.5 - np.random.random(size=3))
-        
+
         self.camera = Camera(
             camera_init_pos, camera_init_rot, (width // 2, height // 2), focal=1000
         )
@@ -128,6 +129,9 @@ class GravitySimulator:
             self.camera.rotate(1, self.cam_auto_rotation[0] * self.cam_rot)
             self.camera.rotate(0, self.cam_auto_rotation[1] * self.cam_rot)
             self.camera.rotate(2, self.cam_auto_rotation[2] * self.cam_rot)
+
+            self.cam_auto_z = (self.cam_auto_z + 0.005) % (2 * np.pi)
+            self.camera.move(2, 0.1 * np.sin(self.cam_auto_z) * self.cam_vel)
 
         self.camera.apply_movement()
 

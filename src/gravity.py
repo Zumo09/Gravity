@@ -14,10 +14,10 @@ def main():
         num_star=400,
         background_color=VIOLET,
         star_color=WHITE,
-        camera_init_pos=(500, 500, 7500),
+        camera_init_pos=(500, 500, 6500),
         camera_init_rot=(0.5, 0.5, 0),
         screen_dim=None,
-        start_time=False,
+        start_time=True,
         start_movement=True
     )
     sim.add_bodies(
