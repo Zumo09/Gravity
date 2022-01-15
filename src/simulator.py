@@ -95,30 +95,30 @@ class GravitySimulator:
 
         key_pressed = pygame.key.get_pressed()
         if key_pressed[pygame.K_w]:
-            self.camera.move(1, -self.cam_vel)
-        if key_pressed[pygame.K_s]:
             self.camera.move(1, self.cam_vel)
+        if key_pressed[pygame.K_s]:
+            self.camera.move(1, -self.cam_vel)
         if key_pressed[pygame.K_a]:
-            self.camera.move(0, -self.cam_vel)
-        if key_pressed[pygame.K_d]:
             self.camera.move(0, self.cam_vel)
+        if key_pressed[pygame.K_d]:
+            self.camera.move(0, -self.cam_vel)
         if key_pressed[pygame.K_q]:
-            self.camera.move(2, -self.cam_vel)
-        if key_pressed[pygame.K_e]:
             self.camera.move(2, self.cam_vel)
+        if key_pressed[pygame.K_e]:
+            self.camera.move(2, -self.cam_vel)
 
         if key_pressed[pygame.K_i]:
-            self.camera.rotate(1, self.cam_rot)
-        if key_pressed[pygame.K_k]:
             self.camera.rotate(1, -self.cam_rot)
+        if key_pressed[pygame.K_k]:
+            self.camera.rotate(1, self.cam_rot)
         if key_pressed[pygame.K_j]:
-            self.camera.rotate(0, -self.cam_rot)
-        if key_pressed[pygame.K_l]:
             self.camera.rotate(0, self.cam_rot)
+        if key_pressed[pygame.K_l]:
+            self.camera.rotate(0, -self.cam_rot)
         if key_pressed[pygame.K_u]:
-            self.camera.rotate(2, -self.cam_rot)
-        if key_pressed[pygame.K_o]:
             self.camera.rotate(2, self.cam_rot)
+        if key_pressed[pygame.K_o]:
+            self.camera.rotate(2, -self.cam_rot)
 
         if self.move_camera:
             self.cam_auto_rotation += 0.01 * (0.5 - np.random.random(size=3))
@@ -143,23 +143,23 @@ class GravitySimulator:
 
         return True
 
-    def _scale_radius(self, body: GravitationalBody) -> float:
-        r = body.radius
-        distance = float(np.linalg.norm(self.camera.position - body.position))
-        return r * self.camera.focal / distance
-
     def _update_ui(self):
         self.display.fill(self.background)
 
         for star in self.camera.project_all(self.stars):
             pygame.draw.circle(self.display, self.star_color, star, 1)
 
+        distance_body = {}
         for body in self.bodies:
-            m = self.camera.project(body.position)
-            r = self._scale_radius(body)
-            pygame.draw.circle(self.display, body.color, m, r)
+            center, distance = self.camera.project_distance(body.position)
+            radius = body.radius * self.camera.focal / distance
+            distance_body[distance] = (body.color, center, radius)
             trajectory = self.camera.project_all(body.trajectory)
             pygame.draw.aalines(self.display, body.color, False, trajectory)
+
+        for distance in sorted(distance_body.keys(), reverse=True):
+            color, center, radius = distance_body[distance]
+            pygame.draw.circle(self.display, color, center, radius)
 
         pygame.display.flip()
 

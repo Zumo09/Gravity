@@ -62,14 +62,19 @@ class Camera:
         )
 
     def update_G(self) -> None:
-        self.G = roto_translation_matrix(
+        self.T = translation_matrix(
             self.position[0],
             self.position[1],
-            self.position[2],
+            self.position[2]
+        ).astype(float)
+
+        self.R = rotation_matrix(
             self.rotation[0],
             self.rotation[1],
-            self.rotation[2],
+            self.rotation[2]
         ).astype(float)
+
+        self.G = np.hstack((self.R, self.T))
 
     def move(self, axes: int, movement: float) -> None:
         self.position[axes] += movement
@@ -102,3 +107,7 @@ class Camera:
         return [
             (m[0] / m[2], m[1] / m[2]) if m[2] != 0 else (m[0], m[1]) for m in m_all.T
         ]
+
+    def project_distance(self, position: np.ndarray) -> Tuple[Tuple[float, float], float]:
+        distance = np.linalg.norm(self.position + np.matmul(self.R, position))
+        return self.project(position), float(distance)

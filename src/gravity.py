@@ -5,7 +5,7 @@ from simulator import GravitySimulator, shades
 def main():
     VIOLET = (10, 0, 20)
     WHITE = (255, 255, 255)
-    CYAN = (110, 200, 245)
+    CYAN = (0, 210, 255)
     PINK = (240, 5, 220)
     PURPLE = (100, 0, 125)
     purple_shades = shades(PINK, PURPLE, 6)
@@ -14,10 +14,10 @@ def main():
         num_star=400,
         background_color=VIOLET,
         star_color=WHITE,
-        camera_init_pos=(-500, -500, -7500),
+        camera_init_pos=(500, 500, 7500),
         camera_init_rot=(0.5, 0.5, 0),
         screen_dim=None,
-        start_time=True,
+        start_time=False,
         start_movement=True
     )
     sim.add_bodies(
