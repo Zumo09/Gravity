@@ -41,6 +41,8 @@ class GravitySimulator:
         camera_init_pos: Tuple[float, float, float] = (-500, -500, -10000),
         camera_init_rot: Tuple[float, float, float] = (0.5, 0.5, 0),
         screen_dim: Optional[Tuple[int, int]] = None,
+        start_time: bool = True,
+        start_movement: bool = True
     ):
         pygame.init()
         if screen_dim is not None:
@@ -52,16 +54,17 @@ class GravitySimulator:
         width = self.display.get_width()
         height = self.display.get_height()
 
-        self.running = True
-        self.move_camera = True
+        self.running = start_time
+        self.move_camera = start_movement
 
         self.background = background_color
         self.star_color = star_color
 
         self.cam_vel = 50
         self.cam_rot = 0.01
+
         self.cam_auto_rotation = 0.5 * (0.5 - np.random.random(size=3))
-        self.cam_auto_movement = np.zeros(3)
+        
         self.camera = Camera(
             camera_init_pos, camera_init_rot, (width // 2, height // 2), focal=1000
         )
@@ -125,13 +128,6 @@ class GravitySimulator:
             self.camera.rotate(1, self.cam_auto_rotation[0] * self.cam_rot)
             self.camera.rotate(0, self.cam_auto_rotation[1] * self.cam_rot)
             self.camera.rotate(2, self.cam_auto_rotation[2] * self.cam_rot)
-
-            self.cam_auto_movement *= 0.99
-            self.cam_auto_movement += 0.01 * (0.5 - np.random.random(size=3))
-
-            self.camera.move(1, self.cam_auto_movement[0] * 0.1 * self.cam_vel)
-            self.camera.move(0, self.cam_auto_movement[1] * 0.1 * self.cam_vel)
-            self.camera.move(2, self.cam_auto_movement[2] * 0.1 * self.cam_vel)
 
         self.camera.apply_movement()
 
