@@ -5,7 +5,7 @@
 *.pyz
 *.manifest
 *.pkg
-*.txt
 *.html
 *.spec
 *.exe
+src/build/Gravity/warn-Gravity.txt
