@@ -94,20 +94,22 @@ class Camera:
         self.rotation = list(self._init_rot)
         self.update_G()
 
+    def _project(self, wrf) -> np.ndarray:
+        m = np.matmul(self.G, wrf.T)
+        return np.matmul(self.A, m)
+
     def project(self, position: np.ndarray) -> Tuple[float, float]:
-        W = np.hstack([position, 1])
-        M = np.matmul(self.G, W)
-        m = np.matmul(self.A, M)
+        m = self._project(np.hstack([position, 1]))
         return (m[0] / m[2], m[1] / m[2]) if m[2] != 0 else (m[0], m[1])
 
     def project_all(self, points) -> List[Tuple[float, float]]:
-        W = np.hstack([points, np.ones((len(points), 1))])
-        M = np.matmul(self.G, W.T)
-        m_all = np.matmul(self.A, M)
+        m_all = self._project(np.hstack([points, np.ones((len(points), 1))]))
         return [
             (m[0] / m[2], m[1] / m[2]) if m[2] != 0 else (m[0], m[1]) for m in m_all.T
         ]
 
+    def distance(self, position: np.ndarray) -> float:
+        return float(np.linalg.norm(self.position + np.matmul(self.R, position)))
+
     def project_distance(self, position: np.ndarray) -> Tuple[Tuple[float, float], float]:
-        distance = np.linalg.norm(self.position + np.matmul(self.R, position))
-        return self.project(position), float(distance)
+        return self.project(position), self.distance(position)
