@@ -72,7 +72,7 @@ class Camera:
             self.rotation[0],
             self.rotation[1],
             self.rotation[2]
-        ).astype(float)
+        ).astype(float).T
 
         self.G = np.hstack((self.R, self.T))
 
@@ -95,6 +95,7 @@ class Camera:
         self.update_G()
 
     def _project(self, wrf) -> np.ndarray:
+        pos = np.hstack([self.position, 0])
         m = np.matmul(self.G, wrf.T)
         return np.matmul(self.A, m)
 
