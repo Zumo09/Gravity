@@ -1,24 +1,22 @@
-from typing import List, Optional, Tuple
+import ctypes
+import sys
+
 import numpy as np
-
-from projection import Camera, rotation_matrix
-from body import GravitationalBody
-
 import pygame
 
+from body import GravitationalBody
+from projection import Camera, rotation_matrix
 
-def shades(
-    light: Tuple[int, int, int], dark: Tuple[int, int, int], shades: int
-) -> List[Tuple[int, int, int]]:
-    gaps = [(l - d) / (shades - 1) for l, d in zip(light, dark)]
-    return [
-        (
-            int(light[0] - s * gaps[0]),
-            int(light[1] - s * gaps[1]),
-            int(light[2] - s * gaps[2]),
-        )
-        for s in range(shades)
-    ]
+if sys.platform == "win32":
+    try:
+        # Per-monitor DPI awareness (Windows 8.1+) - la scelta più corretta
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PROCESS_PER_MONITOR_DPI_AWARE
+    except (AttributeError, OSError):
+        try:
+            # Fallback per versioni più vecchie di Windows
+            ctypes.windll.user32.SetProcessDPIAware()
+        except (AttributeError, OSError):
+            pass
 
 
 def random_star(min_distance: int) -> np.ndarray:
@@ -36,11 +34,11 @@ class GravitySimulator:
     def __init__(
         self,
         num_star: int = 200,
-        background_color: Tuple[int, int, int] = (0, 0, 10),
-        star_color: Tuple[int, int, int] = (255, 255, 255),
-        camera_init_pos: Tuple[float, float, float] = (-500, -500, -10000),
-        camera_init_rot: Tuple[float, float, float] = (0.5, 0.5, 0),
-        screen_dim: Optional[Tuple[int, int]] = None,
+        background_color: tuple[int, int, int] = (0, 0, 10),
+        star_color: tuple[int, int, int] = (255, 255, 255),
+        camera_init_pos: tuple[float, float, float] = (-500, -500, -10000),
+        camera_init_rot: tuple[float, float, float] = (0.5, 0.5, 0),
+        screen_dim: tuple[int, int] | None = None,
         start_time: bool = True,
         start_movement: bool = True,
     ):
@@ -66,35 +64,58 @@ class GravitySimulator:
         self.cam_auto_z = 0
         self.cam_auto_rotation = 0.5 * (0.5 - np.random.random(size=3))
 
-        self.camera = Camera(
-            camera_init_pos, camera_init_rot, (width // 2, height // 2), focal=1000
-        )
+        self.camera = Camera(camera_init_pos, camera_init_rot, (width // 2, height // 2), focal=1000)
 
-        self.bodies: List[GravitationalBody] = []
+        self.bodies: list[GravitationalBody] = []
         self.stars = [random_star(100000) for _ in range(num_star)]
+
+        self.is_alive = True
 
     def add_body(self, body: GravitationalBody) -> None:
         self.bodies.append(body)
 
-    def add_bodies(self, bodies: List[GravitationalBody]) -> None:
+    def add_bodies(self, bodies: list[GravitationalBody]) -> None:
         self.bodies.extend(bodies)
 
-    def simulation_step(self) -> bool:
-        # 1. collect user input
+    def _handle_events(self) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return False
-                elif event.key == pygame.K_SPACE:
-                    self.running = not self.running
-                elif event.key == pygame.K_r:
-                    self.camera.reset()
-                elif event.key == pygame.K_t:
-                    self.move_camera = not self.move_camera
+                self.is_alive = False
+            elif event.type == pygame.VIDEORESIZE:
+                self.screen_size = event.size
+                self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+            elif event.type == pygame.MOUSEMOTION:
+                self.mouse_pos = event.pos
+                self._on_mouse_motion(event.pos)
+            elif event.type == pygame.MOUSEWHEEL:
+                self._on_scroll(event.y)
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                self._on_left_click(event.pos)
+            elif event.type == pygame.KEYDOWN:
+                self._on_key(event.key)
 
+    def _on_mouse_motion(self, pos: tuple[int, int]) -> None:
+        pass
+
+    def _on_scroll(self, dy: int) -> None:
+        pass
+
+    def _on_left_click(self, pos: tuple[int, int]) -> None:
+        pass
+
+    def _on_key(self, key: int) -> None:
+        if key == pygame.K_ESCAPE:
+            self.is_alive = False
+        elif key == pygame.K_SPACE:
+            self.running = not self.running
+        elif key == pygame.K_r:
+            self.camera.reset()
+        elif key == pygame.K_t:
+            self.move_camera = not self.move_camera
+
+    def _handle_key_pressed(self) -> None:
         key_pressed = pygame.key.get_pressed()
+
         if key_pressed[pygame.K_w]:
             self.camera.move(1, self.cam_vel)
         if key_pressed[pygame.K_s]:
@@ -121,6 +142,7 @@ class GravitySimulator:
         if key_pressed[pygame.K_o]:
             self.camera.rotate(2, -self.cam_rot)
 
+    def _update_camera(self) -> None:
         if self.move_camera:
             self.cam_auto_rotation += 0.01 * (0.5 - np.random.random(size=3))
             if np.linalg.norm(self.cam_auto_rotation) > 0.5:
@@ -135,31 +157,52 @@ class GravitySimulator:
 
         self.camera.apply_movement()
 
-        if self.running:
-            for body in self.bodies:
-                body.gravitational_foce(self.bodies, self.dt, self.G)
+    def _update_simulation(self) -> None:
+        if not self.running:
+            return
 
-            for body in self.bodies:
-                body.update()
+        for body in self.bodies:
+            body.gravitational_foce(self.bodies, self.dt, self.G)
 
-        self._update_ui()
-        self.clock.tick(self.FPS)
+        for body in self.bodies:
+            body.update()
 
-        return True
+    def _draw_trajectory(self, body: GravitationalBody) -> None:
+        """Disegna la traiettoria spezzandola ogni volta che un punto
+        attraversa il piano della camera, per evitare la linea fantasma
+        che altrimenti la collegherebbe alla sua proiezione "specchiata"
+        dall'altra parte dello schermo.
+        """
+        run: list[tuple[float, float]] = []
+        for point in body.trajectory:
+            screen, z = self.camera.project_with_depth(point)
+            if z > self.camera.NEAR_CLIP:
+                run.append(screen)
+            else:
+                if len(run) > 1:
+                    pygame.draw.aalines(self.display, body.color, False, run)
+                run = []
+        if len(run) > 1:
+            pygame.draw.aalines(self.display, body.color, False, run)
 
-    def _update_ui(self):
+    def _draw(self):
         self.display.fill(self.background)
 
-        for star in self.camera.project_all(self.stars):
-            pygame.draw.circle(self.display, self.star_color, star, 1)
+        for star in self.stars:
+            screen, z = self.camera.project_with_depth(star)
+            if z <= self.camera.NEAR_CLIP:
+                continue  # Stella dietro la camera: si scarta invece di proiettarla "specchiata".
+            pygame.draw.circle(self.display, self.star_color, screen, 1)
 
         distance_body = {}
         for body in self.bodies:
-            center, distance = self.camera.project_distance(body.position)
+            self._draw_trajectory(body)
+
+            center, distance, z = self.camera.project_distance(body.position)
+            if z <= self.camera.NEAR_CLIP:
+                continue  # Corpo dietro la camera: non disegnarlo questo frame.
             radius = body.radius * self.camera.focal / distance
             distance_body[distance] = (body.color, center, radius)
-            trajectory = self.camera.project_all(body.trajectory)
-            pygame.draw.aalines(self.display, body.color, False, trajectory)
 
         for distance in sorted(distance_body.keys(), reverse=True):
             color, center, radius = distance_body[distance]
@@ -167,8 +210,11 @@ class GravitySimulator:
 
         pygame.display.flip()
 
-    def main_loop(self):
-        while self.simulation_step():
-            continue
+    def main_loop(self) -> None:
+        while self.is_alive:
+            self._update_camera()
+            self._update_simulation()
+            self._draw()
+            self.clock.tick(self.FPS)
 
         pygame.quit()

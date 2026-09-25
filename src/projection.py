@@ -1,9 +1,8 @@
-from typing import List, Tuple
 import numpy as np
 
 
 def translation_matrix(dx: float, dy: float, dz: float):
-    return np.array([[dx], [dy], [dz]])
+    return np.array([[dx], [dy], [dz]]).astype(float)
 
 
 def rotation_matrix(rx: float, ry: float, rz: float) -> np.ndarray:
@@ -19,23 +18,23 @@ def rotation_matrix(rx: float, ry: float, rz: float) -> np.ndarray:
     s = np.sin(rz)
     z = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
 
-    return np.matmul(np.matmul(z, y), x)
+    return np.matmul(np.matmul(z, y), x).astype(float)
 
 
-def roto_translation_matrix(
-    dx: float, dy: float, dz: float, rx: float, ry: float, rz: float
-):
-    return np.hstack((rotation_matrix(rx, ry, rz), translation_matrix(dx, dy, dz)))
+def roto_translation_matrix(rotation_matrix: np.ndarray, translation_matrix: np.ndarray) -> np.ndarray:
+    return np.hstack((rotation_matrix, translation_matrix)).astype(float)
 
 
 class Camera:
+    NEAR_CLIP: float = 1.0
+
     def __init__(
         self,
-        position: Tuple[float, float, float],
-        rotation: Tuple[float, float, float],
-        center: Tuple[float, float],
+        position: tuple[float, float, float],
+        rotation: tuple[float, float, float],
+        center: tuple[float, float],
         focal: float = 1,
-        ku_kv: Tuple[float, float] = (1, 1),
+        ku_kv: tuple[float, float] = (1, 1),
     ) -> None:
         self.focal = focal
         self.ku_kv = ku_kv
@@ -62,19 +61,9 @@ class Camera:
         )
 
     def update_G(self) -> None:
-        self.T = translation_matrix(
-            self.position[0],
-            self.position[1],
-            self.position[2]
-        ).astype(float)
-
-        self.R = rotation_matrix(
-            self.rotation[0],
-            self.rotation[1],
-            self.rotation[2]
-        ).astype(float)
-
-        self.G = np.hstack((self.R, self.T))
+        self.T = translation_matrix(*self.position)
+        self.R = rotation_matrix(*self.rotation)
+        self.G = roto_translation_matrix(self.R, self.T)
 
     def move(self, axes: int, movement: float) -> None:
         self.position[axes] += movement
@@ -94,20 +83,38 @@ class Camera:
         self.rotation = list(self._init_rot)
         self.update_G()
 
-    def project(self, position: np.ndarray) -> Tuple[float, float]:
-        W = np.hstack([position, 1])
-        M = np.matmul(self.G, W)
-        m = np.matmul(self.A, M)
-        return (m[0] / m[2], m[1] / m[2]) if m[2] != 0 else (m[0], m[1])
+    def _project_M(self, position: np.ndarray) -> np.ndarray:
+        """Punto nello spazio camera, prima della divisione prospettica.
 
-    def project_all(self, points) -> List[Tuple[float, float]]:
+        M[2] è la profondità rispetto alla camera: M[2] > NEAR_CLIP significa
+        "punto (abbastanza) davanti alla camera".
+        """
+        W = np.hstack([position, 1])
+        return np.matmul(self.G, W)
+
+    def project(self, position: np.ndarray) -> tuple[float, float]:
+        M = self._project_M(position)
+        return (M[0] / M[2], M[1] / M[2]) if M[2] != 0 else (M[0], M[1])
+
+    def project_with_depth(self, position: np.ndarray) -> tuple[tuple[float, float], float]:
+        """Come project(), ma restituisce anche la profondità M[2].
+
+        Chi disegna una linea tra più punti (es. una traiettoria) deve
+        spezzarla dove questo valore scende sotto NEAR_CLIP, invece di unire
+        sempre tutti i punti in un'unica linea continua.
+        """
+        M = self._project_M(position)
+        screen = (M[0] / M[2], M[1] / M[2]) if M[2] != 0 else (M[0], M[1])
+        return screen, float(M[2])
+
+    def project_all(self, points) -> list[tuple[float, float]]:
         W = np.hstack([points, np.ones((len(points), 1))])
         M = np.matmul(self.G, W.T)
         m_all = np.matmul(self.A, M)
-        return [
-            (m[0] / m[2], m[1] / m[2]) if m[2] != 0 else (m[0], m[1]) for m in m_all.T
-        ]
+        return [(m[0] / m[2], m[1] / m[2]) if m[2] != 0 else (m[0], m[1]) for m in m_all.T]
 
-    def project_distance(self, position: np.ndarray) -> Tuple[Tuple[float, float], float]:
-        distance = np.linalg.norm(self.position + np.matmul(self.R, position))
-        return self.project(position), float(distance)
+    def project_distance(self, position: np.ndarray) -> tuple[tuple[float, float], float, float]:
+        M = self._project_M(position)
+        screen = (M[0] / M[2], M[1] / M[2]) if M[2] != 0 else (M[0], M[1])
+        distance = float(np.linalg.norm(M))
+        return screen, distance, float(M[2])

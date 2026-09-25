@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple
+
 from collections import deque
 import numpy as np
 
@@ -9,9 +9,9 @@ class GravitationalBody:
         self,
         mass: float,
         radius: float,
-        position: Tuple[float, float, float],
-        velocity: Tuple[float, float, float] = (0, 0, 0),
-        color: Tuple[int, int, int] = (255, 255, 255),
+        position: tuple[float, float, float],
+        velocity: tuple[float, float, float] = (0, 0, 0),
+        color: tuple[int, int, int] = (255, 255, 255),
         trajectory_len: int = 2,
     ) -> None:
         self.mass = mass
@@ -26,7 +26,7 @@ class GravitationalBody:
             self.trajectory.append(self.position.copy())
 
     def gravitational_foce(
-        self, bodies: List[GravitationalBody], dt: float, G: float
+        self, bodies: list[GravitationalBody], dt: float, G: float
     ) -> None:
         dV = np.zeros(3, dtype=float)
         for body in bodies:
@@ -45,4 +45,4 @@ class GravitationalBody:
         norm_distance = np.linalg.norm(distance)
         if norm_distance < 2 * (self.radius + other.radius):
             return -(other.mass / (2 * (self.radius + other.radius)) ** 3) * distance
-        return (other.mass / norm_distance ** 3) * distance
+        return (other.mass / norm_distance**3) * distance

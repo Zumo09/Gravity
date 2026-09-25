@@ -1,10 +1,22 @@
 from body import GravitationalBody
-from simulator import GravitySimulator, shades
+from simulator import GravitySimulator
+
+
+def shades(light: tuple[int, int, int], dark: tuple[int, int, int], shades: int) -> list[tuple[int, int, int]]:
+    gaps = [abs(l - d) / (shades - 1) for l, d in zip(light, dark)]
+    return [
+        (
+            int(light[0] - s * gaps[0]),
+            int(light[1] - s * gaps[1]),
+            int(light[2] - s * gaps[2]),
+        )
+        for s in range(shades)
+    ]
 
 
 def main():
-    VIOLET = (10, 0, 20)
-    WHITE = (255, 255, 255)
+    BACKGROUND = (0, 0, 0)
+    STARS = (255, 255, 255)
     CYAN = (0, 210, 255)
     PINK = (240, 5, 220)
     PURPLE = (100, 0, 125)
@@ -12,13 +24,13 @@ def main():
 
     sim = GravitySimulator(
         num_star=400,
-        background_color=VIOLET,
-        star_color=WHITE,
-        camera_init_pos=(500, 500, 6500),
+        background_color=BACKGROUND,
+        star_color=STARS,
+        camera_init_pos=(250, 250, 3750),
         camera_init_rot=(0.5, 0.5, 0),
         screen_dim=None,
         start_time=True,
-        start_movement=True
+        start_movement=True,
     )
     sim.add_bodies(
         [
