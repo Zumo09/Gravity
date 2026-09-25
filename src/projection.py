@@ -84,17 +84,21 @@ class Camera:
         self.update_G()
 
     def _project_M(self, position: np.ndarray) -> np.ndarray:
-        """Punto nello spazio camera, prima della divisione prospettica.
+        """Punto nello spazio camera (dopo G, prima della matrice intrinseca A).
 
         M[2] è la profondità rispetto alla camera: M[2] > NEAR_CLIP significa
-        "punto (abbastanza) davanti alla camera".
+        "punto (abbastanza) davanti alla camera". Nota: A non altera la
+        componente z (la sua terza riga è [0, 0, 1]), quindi M[2] coincide
+        con m[2] più sotto: si può usare M[2] come profondità anche dopo aver
+        applicato A.
         """
         W = np.hstack([position, 1])
         return np.matmul(self.G, W)
 
     def project(self, position: np.ndarray) -> tuple[float, float]:
         M = self._project_M(position)
-        return (M[0] / M[2], M[1] / M[2]) if M[2] != 0 else (M[0], M[1])
+        m = np.matmul(self.A, M)
+        return (m[0] / m[2], m[1] / m[2]) if m[2] != 0 else (m[0], m[1])
 
     def project_with_depth(self, position: np.ndarray) -> tuple[tuple[float, float], float]:
         """Come project(), ma restituisce anche la profondità M[2].
@@ -104,7 +108,8 @@ class Camera:
         sempre tutti i punti in un'unica linea continua.
         """
         M = self._project_M(position)
-        screen = (M[0] / M[2], M[1] / M[2]) if M[2] != 0 else (M[0], M[1])
+        m = np.matmul(self.A, M)
+        screen = (m[0] / m[2], m[1] / m[2]) if m[2] != 0 else (m[0], m[1])
         return screen, float(M[2])
 
     def project_all(self, points) -> list[tuple[float, float]]:
@@ -115,6 +120,7 @@ class Camera:
 
     def project_distance(self, position: np.ndarray) -> tuple[tuple[float, float], float, float]:
         M = self._project_M(position)
-        screen = (M[0] / M[2], M[1] / M[2]) if M[2] != 0 else (M[0], M[1])
+        m = np.matmul(self.A, M)
+        screen = (m[0] / m[2], m[1] / m[2]) if m[2] != 0 else (m[0], m[1])
         distance = float(np.linalg.norm(M))
         return screen, distance, float(M[2])
