@@ -212,6 +212,8 @@ class GravitySimulator:
 
     def main_loop(self) -> None:
         while self.is_alive:
+            self._handle_events()
+            self._handle_key_pressed()
             self._update_camera()
             self._update_simulation()
             self._draw()
